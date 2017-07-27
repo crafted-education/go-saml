@@ -98,7 +98,7 @@ type SignatureValue struct {
 
 //
 type KeyInfo struct {
-	XMLName  xml.Name
+	XMLName  xml.Name `xml:"http://www.w3.org/2000/09/xmldsig# KeyInfo"`
 	X509Data X509Data `xml:",innerxml"`
 }
 
