@@ -11,6 +11,7 @@ type ServiceProviderSettings struct {
 	IDPSSOURL                   string
 	IDPSSODescriptorURL         string
 	IDPPublicCertPath           string
+	MetadataURL                 string
 	AssertionConsumerServiceURL string
 	SPSignRequest               bool
 
