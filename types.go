@@ -121,7 +121,7 @@ type SamlsigReference struct {
 }
 
 type X509Data struct {
-	XMLName         xml.Name
+	XMLName         xml.Name        `xml:"http://www.w3.org/2000/09/xmldsig# X509Data"`
 	X509Certificate X509Certificate `xml:",innerxml"`
 }
 
@@ -140,8 +140,8 @@ type DigestValue struct {
 }
 
 type X509Certificate struct {
-	XMLName xml.Name
-	Cert    string `xml:",innerxml"`
+	XMLName xml.Name `xml:"http://www.w3.org/2000/09/xmldsig# X509Certificate"`
+	Cert    string   `xml:",innerxml"`
 }
 
 type Transform struct {
