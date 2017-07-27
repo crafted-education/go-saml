@@ -22,8 +22,6 @@
 //OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 //OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-
-
 package saml
 
 import (
@@ -83,7 +81,7 @@ type Signature struct {
 	Id             string `xml:"Id,attr"`
 	SignedInfo     SignedInfo
 	SignatureValue SignatureValue
-	KeyInfo        KeyInfo
+	KeyInfo        KeyInfo `xml:"KeyInfo,innerxml"`
 }
 
 type SignedInfo struct {
