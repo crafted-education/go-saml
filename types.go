@@ -81,7 +81,7 @@ type Signature struct {
 	Id             string `xml:"Id,attr"`
 	SignedInfo     SignedInfo
 	SignatureValue SignatureValue
-	KeyInfo        KeyInfo `xml:"KeyInfo,innerxml"`
+	KeyInfo        KeyInfo
 }
 
 type SignedInfo struct {
