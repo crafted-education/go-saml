@@ -199,7 +199,8 @@ type Response struct {
 
 	EncryptedAssertion EncryptedAssertion `xml:"EncryptedAssertion,omitempty"`
 
-	originalString string
+	originalString  string
+	decryptedString string
 }
 
 type Assertion struct {
