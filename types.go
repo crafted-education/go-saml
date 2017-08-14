@@ -72,6 +72,11 @@ type KeyInfo struct {
 	X509Data X509Data `xml:",innerxml"`
 }
 
+type KeyInfoMain struct {
+	XMLName      xml.Name     `xml:"KeyInfo"`
+	EncryptedKey EncryptedKey `xml:"EncryptedKey,omitempty"`
+}
+
 type CanonicalizationMethod struct {
 	XMLName   xml.Name
 	Algorithm string `xml:"Algorithm,attr"`
@@ -192,6 +197,8 @@ type Response struct {
 	Status    Status    `xml:"Status"`
 	Assertion Assertion `xml:"Assertion"`
 
+	EncryptedAssertion EncryptedAssertion `xml:"EncryptedAssertion,omitempty"`
+
 	originalString string
 }
 
@@ -208,6 +215,7 @@ type Assertion struct {
 	Conditions         Conditions
 	AuthnStatements    []AuthnStatement `xml:"AuthnStatement,omitempty"`
 	AttributeStatement AttributeStatement
+	Signature          Signature
 }
 
 type Conditions struct {
@@ -293,4 +301,35 @@ type AuthnStatement struct {
 type AuthnContext struct {
 	XMLName              xml.Name
 	AuthnContextClassRef AuthnContextClassRef `xml:"AuthnContextClassRef"`
+}
+type EncryptedAssertion struct {
+	XMLName       xml.Name
+	EncryptedData EncryptedData
+	Assertion     Assertion `xml:"Assertion"`
+}
+
+type EncryptedData struct {
+	XMLName          xml.Name
+	EncryptionMethod EncryptionMethod
+	KeyInfo          KeyInfoMain `xml:"KeyInfo"`
+	CipherData       CipherData
+}
+
+type EncryptionMethod struct {
+	XMLName      xml.Name
+	Algorithm    string `xml:"Algorithm,attr"`
+	DigestMethod DigestMethod
+}
+
+type EncryptedKey struct {
+	XMLName          xml.Name
+	ID               string `xml:"Id,attr"`
+	EncryptionMethod EncryptionMethod
+	KeyInfo          KeyInfo
+	CipherData       CipherData
+}
+
+type CipherData struct {
+	XMLName     xml.Name
+	CipherValue string `xml:"CipherValue"`
 }
