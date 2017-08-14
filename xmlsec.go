@@ -63,6 +63,41 @@ func sign(xml string, privateKeyPath string, id string) (string, error) {
 	return samlSignedRequestXML, nil
 }
 
+// DecryptResponse decrypt a SAML 2.0 xml using his private key
+func DecryptResponse(xml string, privateKeyPath string) (string, error) {
+	return decrypt(xml, privateKeyPath)
+}
+
+func decrypt(xml string, privateKeyPath string) (string, error) {
+	samlXmlsecInput, err := ioutil.TempFile(os.TempDir(), "saml-resp")
+	if err != nil {
+		return "", err
+	}
+	defer deleteTempFile(samlXmlsecInput.Name())
+	samlXmlsecInput.WriteString(xml)
+	samlXmlsecInput.Close()
+
+	samlXmlsecOutput, err := ioutil.TempFile(os.TempDir(), "tmpgs")
+	if err != nil {
+		return "", err
+	}
+	defer deleteTempFile(samlXmlsecOutput.Name())
+	samlXmlsecOutput.Close()
+
+	output, err := exec.Command("xmlsec1", "--decrypt", "--privkey-pem", privateKeyPath,
+		"--output", samlXmlsecOutput.Name(), samlXmlsecInput.Name()).CombinedOutput()
+	defer deleteTempFile(samlXmlsecInput.Name())
+	if err != nil {
+		return "", errors.New(err.Error() + " : " + string(output))
+	}
+	decryptedSAMLResponse, err := ioutil.ReadFile(samlXmlsecOutput.Name())
+	if err != nil {
+		return "", err
+	}
+	decryptedSAMLResponseXML := strings.Trim(string(decryptedSAMLResponse), "\n")
+	return decryptedSAMLResponseXML, nil
+}
+
 // VerifyResponseSignature verify signature of a SAML 2.0 Response document
 // `publicCertPath` must be a path on the filesystem, xmlsec1 is run out of process
 // through `exec`
