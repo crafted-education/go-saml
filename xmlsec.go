@@ -9,8 +9,10 @@ import (
 )
 
 const (
-	xmlResponseID = "urn:oasis:names:tc:SAML:2.0:protocol:Response"
-	xmlRequestID  = "urn:oasis:names:tc:SAML:2.0:protocol:AuthnRequest"
+	xmlResponseID  = "urn:oasis:names:tc:SAML:2.0:protocol:Response"
+	xmlAssertionID = "Assertion"
+	//xmlResponseID = "urn:oasis:names:tc:SAML:2.0:protocol:Assertion"
+	xmlRequestID = "urn:oasis:names:tc:SAML:2.0:protocol:AuthnRequest"
 )
 
 // SignRequest sign a SAML 2.0 AuthnRequest
@@ -103,6 +105,12 @@ func decrypt(xml string, privateKeyPath string) (string, error) {
 // through `exec`
 func VerifyResponseSignature(xml string, publicCertPath string) error {
 	return verify(xml, publicCertPath, xmlResponseID)
+}
+
+// VerifyAssertionSignature verifies the signature of the assertion
+// in a SAML 2.0 Response document. If encrypted, decryption must occur prior.
+func VerifyAssertionSignature(xml string, publicCertPath string) error {
+	return verify(xml, publicCertPath, xmlAssertionID)
 }
 
 // VerifyRequestSignature verify signature of a SAML 2.0 AuthnRequest document
