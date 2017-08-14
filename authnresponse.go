@@ -47,17 +47,50 @@ func ParseEncodedResponse(b64ResponseXML string) (*Response, error) {
 	return &response, nil
 }
 
-func (r *Response) Validate(s *ServiceProviderSettings) error {
-	err := r.Decrypt(s.PrivateKeyPath)
-	if err != nil {
-		return err
+func (r *Response) isResponseSigned(s *ServiceProviderSettings) bool {
+	if len(r.Signature.SignatureValue.Value) == 0 && len(r.Assertion.Signature.SignatureValue.Value) == 0 {
+		return false
 	}
+	return true
+}
+
+func (r *Response) isAssertionSigned(s *ServiceProviderSettings) bool {
+	assertion, err := r.getAssertion()
+	if err != nil {
+		return false
+	}
+	if len(assertion.Signature.SignatureValue.Value) == 0 && len(assertion.Signature.SignatureValue.Value) == 0 {
+		return false
+	}
+	return true
+}
+
+func (r *Response) Validate(s *ServiceProviderSettings) error {
+
 	if r.Version != "2.0" {
 		return errors.New("unsupported SAML Version")
 	}
 
 	if len(r.ID) == 0 {
 		return errors.New("missing ID attribute on SAML Response")
+	}
+	if r.isResponseSigned(s) {
+		err := VerifyResponseSignature(r.originalString, s.IDPPublicCertPath)
+		if err != nil {
+			return err
+		}
+	}
+
+	err := r.Decrypt(s.PrivateKeyPath)
+	if err != nil {
+		return err
+	}
+
+	if r.isAssertionSigned(s) {
+		err = VerifyAssertionSignature(r.decryptedString, s.IDPPublicCertPath)
+		if err != nil {
+			return err
+		}
 	}
 	assertion, err := r.getAssertion()
 
@@ -80,10 +113,6 @@ func (r *Response) Validate(s *ServiceProviderSettings) error {
 		return errors.New("destination mismath expected: " + s.AssertionConsumerServiceURL + " not " + r.Destination)
 	}
 
-	if len(r.Signature.SignatureValue.Value) == 0 && len(assertion.Signature.SignatureValue.Value) == 0 {
-		return errors.New("no signature")
-	}
-
 	if r.Destination != s.AssertionConsumerServiceURL {
 		return errors.New("destination mismath expected: " + s.AssertionConsumerServiceURL + " not " + r.Destination)
 	}
@@ -94,11 +123,6 @@ func (r *Response) Validate(s *ServiceProviderSettings) error {
 
 	if assertion.Subject.SubjectConfirmation.SubjectConfirmationData.Recipient != s.AssertionConsumerServiceURL {
 		return errors.New("subject recipient mismatch, expected: " + s.AssertionConsumerServiceURL + " not " + r.Assertion.Subject.SubjectConfirmation.SubjectConfirmationData.Recipient)
-	}
-
-	err = VerifyResponseSignature(r.originalString, s.IDPPublicCertPath)
-	if err != nil {
-		return err
 	}
 
 	//CHECK TIMES
@@ -136,7 +160,7 @@ func (r *Response) Decrypt(privateKeyPath string) error {
 		return err
 	}
 
-	r.originalString = plainXML
+	r.decryptedString = plainXML
 	return nil
 }
 
