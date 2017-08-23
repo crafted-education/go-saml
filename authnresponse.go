@@ -85,13 +85,19 @@ func (r *Response) Validate(s *ServiceProviderSettings) error {
 	if err != nil {
 		return err
 	}
+	xmlString := r.originalString
+	if r.IsEncrypted() == true && r.decryptedString != "" {
+		xmlString = r.decryptedString
+	}
 
+	// if it is encrypted, we need to verify the assertion signature (if present)
 	if r.isAssertionSigned(s) {
-		err = VerifyAssertionSignature(r.decryptedString, s.IDPPublicCertPath)
+		err = VerifyAssertionSignature(xmlString, s.IDPPublicCertPath)
 		if err != nil {
 			return err
 		}
 	}
+
 	assertion, err := r.getAssertion()
 
 	if err != nil {
