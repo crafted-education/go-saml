@@ -24,6 +24,10 @@ import (
 	"github.com/RobotsAndPencils/go-saml/util"
 )
 
+const (
+	RFC3339Micro = "2006-01-02T15:04:05.999999Z07:00"
+)
+
 func ParseCompressedEncodedRequest(b64RequestXML string) (*AuthnRequest, error) {
 	var authnRequest AuthnRequest
 	compressedXML, err := base64.StdEncoding.DecodeString(b64RequestXML)
@@ -130,7 +134,7 @@ func NewAuthnRequest() *AuthnRequest {
 			Url:  "", // caller must populate ar.AppSettings.Issuer
 			SAML: "urn:oasis:names:tc:SAML:2.0:assertion",
 		},
-		IssueInstant: time.Now().UTC().Format(time.RFC3339Nano),
+		IssueInstant: time.Now().UTC().Format(RFC3339Micro),
 		NameIDPolicy: NameIDPolicy{
 			XMLName: xml.Name{
 				Local: "samlp:NameIDPolicy",
