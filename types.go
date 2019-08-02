@@ -10,7 +10,7 @@ type AuthnRequest struct {
 	XMLName                        xml.Name
 	SAMLP                          string                `xml:"xmlns:samlp,attr"`
 	SAML                           string                `xml:"xmlns:saml,attr"`
-	SAMLSIG                        string                `xml:"xmlns:samlsig,attr,omitempty"`
+	SAMLSIG                        string                `xml:"xmlns:ds,attr,omitempty"`
 	ID                             string                `xml:"ID,attr"`
 	Version                        string                `xml:"Version,attr"`
 	ProtocolBinding                string                `xml:"ProtocolBinding,attr"`
