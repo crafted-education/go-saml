@@ -2,6 +2,10 @@ package saml
 
 import "encoding/xml"
 
+const (
+	RFC3339Micro = "2006-01-02T15:04:05.999999Z07:00"
+)
+
 type AuthnRequest struct {
 	XMLName                        xml.Name
 	SAMLP                          string                `xml:"xmlns:samlp,attr"`

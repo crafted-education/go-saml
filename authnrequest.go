@@ -24,10 +24,6 @@ import (
 	"github.com/RobotsAndPencils/go-saml/util"
 )
 
-const (
-	RFC3339Micro = "2006-01-02T15:04:05.999999Z07:00"
-)
-
 func ParseCompressedEncodedRequest(b64RequestXML string) (*AuthnRequest, error) {
 	var authnRequest AuthnRequest
 	compressedXML, err := base64.StdEncoding.DecodeString(b64RequestXML)
