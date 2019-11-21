@@ -23,12 +23,15 @@ type ServiceProviderSettings struct {
 type IdentityProviderSettings struct {
 }
 
+func (s *ServiceProviderSettings) setHasInit() {
+	s.hasInit = true
+}
+
 func (s *ServiceProviderSettings) Init() (err error) {
 	if s.hasInit {
 		return nil
 	}
-	s.hasInit = true
-
+	defer s.setHasInit()
 	if s.SPSignRequest {
 		s.publicCert, err = util.LoadCertificate(s.PublicCertPath)
 		if err != nil {
