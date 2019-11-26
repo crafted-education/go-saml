@@ -33,6 +33,7 @@ func (s *ServiceProviderSettings) setHasInit() {
 func (s *ServiceProviderSettings) Init() (err error) {
 	if s.hasInit {
 		log.Println("already initialized")
+		log.Println("already init: ", s.PublicCert())
 		return nil
 	}
 	log.Println("initializing ServiceProviderSettings")
@@ -64,6 +65,7 @@ func (s *ServiceProviderSettings) Init() (err error) {
 			log.Println("idp public cert empty")
 		}
 	}
+	log.Println("first init pub cert: ", s.PublicCert())
 	return nil
 }
 
