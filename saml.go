@@ -35,6 +35,7 @@ func (s *ServiceProviderSettings) Init() (err error) {
 		log.Println("already initialized")
 		return nil
 	}
+	log.Println("initializing ServiceProviderSettings")
 	if s.SPSignRequest {
 		s.publicCert, err = util.LoadCertificate(s.PublicCertPath)
 		if err != nil {
