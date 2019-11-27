@@ -65,7 +65,7 @@ func (s *ServiceProviderSettings) Init() (err error) {
 			log.Println("idp public cert empty")
 		}
 	}
-	log.Println("first init pub cert: ", s.PublicCert())
+	log.Println("first init idp pub cert: ", s.IDPPublicCert())
 	return nil
 }
 
