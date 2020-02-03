@@ -20,9 +20,9 @@ type AuthnRequest struct {
 	AssertionConsumerServiceIndex  int                   `xml:"AssertionConsumerServiceIndex,attr,omitempty"`
 	AttributeConsumingServiceIndex int                   `xml:"AttributeConsumingServiceIndex,attr"`
 	Issuer                         Issuer                `xml:"Issuer"`
+	Signature                      *Signature            `xml:"Signature,omitempty"`
 	NameIDPolicy                   NameIDPolicy          `xml:"NameIDPolicy"`
 	RequestedAuthnContext          RequestedAuthnContext `xml:"RequestedAuthnContext"`
-	Signature                      *Signature            `xml:"Signature,omitempty"`
 	originalString                 string
 }
 
