@@ -151,7 +151,7 @@ func NewAuthnRequest() *AuthnRequest {
 					XMLName: xml.Name{
 						Local: "ds:SignatureMethod",
 					},
-					Algorithm: "http://www.w3.org/2000/09/xmldsig#rsa-sha1",
+					Algorithm: "http://www.w3.org/2000/09/xmldsig#rsa-sha256",
 				},
 				SamlsigReference: SamlsigReference{
 					XMLName: xml.Name{
@@ -178,7 +178,7 @@ func NewAuthnRequest() *AuthnRequest {
 						XMLName: xml.Name{
 							Local: "ds:DigestMethod",
 						},
-						Algorithm: "http://www.w3.org/2000/09/xmldsig#sha1",
+						Algorithm: "http://www.w3.org/2000/09/xmldsig#sha256",
 					},
 					DigestValue: DigestValue{
 						XMLName: xml.Name{
