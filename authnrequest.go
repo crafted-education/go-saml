@@ -214,7 +214,7 @@ func NewAuthnRequest() *AuthnRequest {
 				Local: "samlp:NameIDPolicy",
 			},
 			AllowCreate: true,
-			Format:      "urn:oasis:names:tc:SAML:2.0:nameid-format:transient",
+			Format:      "urn:oasis:names:tc:SAML:1.1:nameid-format:unspecified",
 		},
 		RequestedAuthnContext: RequestedAuthnContext{
 			XMLName: xml.Name{
