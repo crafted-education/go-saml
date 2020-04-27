@@ -2,23 +2,27 @@ package saml
 
 import "encoding/xml"
 
+const (
+	RFC3339Micro = "2006-01-02T15:04:05.999999Z07:00"
+)
+
 type AuthnRequest struct {
 	XMLName                        xml.Name
 	SAMLP                          string                `xml:"xmlns:samlp,attr"`
 	SAML                           string                `xml:"xmlns:saml,attr"`
-	SAMLSIG                        string                `xml:"xmlns:samlsig,attr,omitempty"`
+	SAMLSIG                        string                `xml:"xmlns:ds,attr,omitempty"`
 	ID                             string                `xml:"ID,attr"`
 	Version                        string                `xml:"Version,attr"`
 	ProtocolBinding                string                `xml:"ProtocolBinding,attr"`
 	AssertionConsumerServiceURL    string                `xml:"AssertionConsumerServiceURL,attr"`
 	Destination                    string                `xml:"Destination,attr"`
 	IssueInstant                   string                `xml:"IssueInstant,attr"`
-	AssertionConsumerServiceIndex  int                   `xml:"AssertionConsumerServiceIndex,attr"`
+	AssertionConsumerServiceIndex  int                   `xml:"AssertionConsumerServiceIndex,attr,omitempty"`
 	AttributeConsumingServiceIndex int                   `xml:"AttributeConsumingServiceIndex,attr"`
 	Issuer                         Issuer                `xml:"Issuer"`
+	Signature                      *Signature            `xml:"Signature,omitempty"`
 	NameIDPolicy                   NameIDPolicy          `xml:"NameIDPolicy"`
 	RequestedAuthnContext          RequestedAuthnContext `xml:"RequestedAuthnContext"`
-	Signature                      *Signature            `xml:"Signature,omitempty"`
 	originalString                 string
 }
 
@@ -70,6 +74,11 @@ type SignatureValue struct {
 type KeyInfo struct {
 	XMLName  xml.Name
 	X509Data X509Data `xml:",innerxml"`
+}
+
+type KeyInfoMain struct {
+	XMLName      xml.Name     `xml:"KeyInfo"`
+	EncryptedKey EncryptedKey `xml:"EncryptedKey,omitempty"`
 }
 
 type CanonicalizationMethod struct {
@@ -192,7 +201,10 @@ type Response struct {
 	Status    Status    `xml:"Status"`
 	Assertion Assertion `xml:"Assertion"`
 
-	originalString string
+	EncryptedAssertion EncryptedAssertion `xml:"EncryptedAssertion,omitempty"`
+
+	originalString  string
+	decryptedString string
 }
 
 type Assertion struct {
@@ -208,6 +220,7 @@ type Assertion struct {
 	Conditions         Conditions
 	AuthnStatements    []AuthnStatement `xml:"AuthnStatement,omitempty"`
 	AttributeStatement AttributeStatement
+	Signature          Signature
 }
 
 type Conditions struct {
@@ -293,4 +306,35 @@ type AuthnStatement struct {
 type AuthnContext struct {
 	XMLName              xml.Name
 	AuthnContextClassRef AuthnContextClassRef `xml:"AuthnContextClassRef"`
+}
+type EncryptedAssertion struct {
+	XMLName       xml.Name
+	EncryptedData EncryptedData
+	Assertion     Assertion `xml:"Assertion"`
+}
+
+type EncryptedData struct {
+	XMLName          xml.Name
+	EncryptionMethod EncryptionMethod
+	KeyInfo          KeyInfoMain `xml:"KeyInfo"`
+	CipherData       CipherData
+}
+
+type EncryptionMethod struct {
+	XMLName      xml.Name
+	Algorithm    string `xml:"Algorithm,attr"`
+	DigestMethod DigestMethod
+}
+
+type EncryptedKey struct {
+	XMLName          xml.Name
+	ID               string `xml:"Id,attr"`
+	EncryptionMethod EncryptionMethod
+	KeyInfo          KeyInfo
+	CipherData       CipherData
+}
+
+type CipherData struct {
+	XMLName     xml.Name
+	CipherValue string `xml:"CipherValue"`
 }

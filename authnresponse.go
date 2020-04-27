@@ -34,6 +34,7 @@ func ParseEncodedResponse(b64ResponseXML string) (*Response, error) {
 	if err != nil {
 		return nil, err
 	}
+
 	err = xml.Unmarshal(bytesXML, &response)
 	if err != nil {
 		return nil, err
@@ -46,7 +47,26 @@ func ParseEncodedResponse(b64ResponseXML string) (*Response, error) {
 	return &response, nil
 }
 
+func (r *Response) isResponseSigned(s *ServiceProviderSettings) bool {
+	if len(r.Signature.SignatureValue.Value) == 0 && len(r.Assertion.Signature.SignatureValue.Value) == 0 {
+		return false
+	}
+	return true
+}
+
+func (r *Response) isAssertionSigned(s *ServiceProviderSettings) bool {
+	assertion, err := r.getAssertion()
+	if err != nil {
+		return false
+	}
+	if len(assertion.Signature.SignatureValue.Value) == 0 && len(assertion.Signature.SignatureValue.Value) == 0 {
+		return false
+	}
+	return true
+}
+
 func (r *Response) Validate(s *ServiceProviderSettings) error {
+
 	if r.Version != "2.0" {
 		return errors.New("unsupported SAML Version")
 	}
@@ -54,34 +74,65 @@ func (r *Response) Validate(s *ServiceProviderSettings) error {
 	if len(r.ID) == 0 {
 		return errors.New("missing ID attribute on SAML Response")
 	}
-
-	if len(r.Assertion.ID) == 0 {
-		return errors.New("no Assertions")
+	if r.isResponseSigned(s) {
+		err := VerifyResponseSignature(r.originalString, s.IDPPublicCertPath)
+		if err != nil {
+			return err
+		}
 	}
 
-	if len(r.Signature.SignatureValue.Value) == 0 {
-		return errors.New("no signature")
+	err := r.Decrypt(s.PrivateKeyPath)
+	if err != nil {
+		return err
+	}
+	xmlString := r.originalString
+	if r.IsEncrypted() == true && r.decryptedString != "" {
+		xmlString = r.decryptedString
+	}
+
+	// if it is encrypted, we need to verify the assertion signature (if present)
+	if r.isAssertionSigned(s) {
+		err = VerifyAssertionSignature(xmlString, s.IDPPublicCertPath)
+		if err != nil {
+			return err
+		}
+	}
+
+	assertion, err := r.getAssertion()
+
+	if err != nil {
+		return err
+	}
+
+	if len(assertion.ID) == 0 {
+		return errors.New("no Assertions")
+	}
+	if assertion.Subject.SubjectConfirmation.Method != "urn:oasis:names:tc:SAML:2.0:cm:bearer" {
+		return errors.New("assertion method exception")
+	}
+
+	if assertion.Subject.SubjectConfirmation.SubjectConfirmationData.Recipient != s.AssertionConsumerServiceURL {
+		return errors.New("subject recipient mismatch, expected: " + s.AssertionConsumerServiceURL + " not " + assertion.Subject.SubjectConfirmation.SubjectConfirmationData.Recipient)
 	}
 
 	if r.Destination != s.AssertionConsumerServiceURL {
 		return errors.New("destination mismath expected: " + s.AssertionConsumerServiceURL + " not " + r.Destination)
 	}
 
-	if r.Assertion.Subject.SubjectConfirmation.Method != "urn:oasis:names:tc:SAML:2.0:cm:bearer" {
+	if r.Destination != s.AssertionConsumerServiceURL {
+		return errors.New("destination mismath expected: " + s.AssertionConsumerServiceURL + " not " + r.Destination)
+	}
+
+	if assertion.Subject.SubjectConfirmation.Method != "urn:oasis:names:tc:SAML:2.0:cm:bearer" {
 		return errors.New("assertion method exception")
 	}
 
-	if r.Assertion.Subject.SubjectConfirmation.SubjectConfirmationData.Recipient != s.AssertionConsumerServiceURL {
+	if assertion.Subject.SubjectConfirmation.SubjectConfirmationData.Recipient != s.AssertionConsumerServiceURL {
 		return errors.New("subject recipient mismatch, expected: " + s.AssertionConsumerServiceURL + " not " + r.Assertion.Subject.SubjectConfirmation.SubjectConfirmationData.Recipient)
 	}
 
-	err := VerifyResponseSignature(r.originalString, s.IDPPublicCertPath)
-	if err != nil {
-		return err
-	}
-
 	//CHECK TIMES
-	expires := r.Assertion.Subject.SubjectConfirmation.SubjectConfirmationData.NotOnOrAfter
+	expires := assertion.Subject.SubjectConfirmation.SubjectConfirmationData.NotOnOrAfter
 	notOnOrAfter, e := time.Parse(time.RFC3339, expires)
 	if e != nil {
 		return e
@@ -91,6 +142,67 @@ func (r *Response) Validate(s *ServiceProviderSettings) error {
 	}
 
 	return nil
+}
+func (r *Response) IsEncrypted() bool {
+	if r.EncryptedAssertion.EncryptedData.EncryptionMethod.Algorithm == "" {
+		return false
+	} else {
+		return true
+	}
+}
+
+func (r *Response) Decrypt(privateKeyPath string) error {
+	s := r.originalString
+
+	if r.IsEncrypted() == false {
+		return nil
+	}
+	plainXML, err := DecryptResponse(s, privateKeyPath)
+	if err != nil {
+		return err
+	}
+	err = xml.Unmarshal([]byte(plainXML), &r)
+	if err != nil {
+		return err
+	}
+
+	r.decryptedString = plainXML
+	return nil
+}
+
+func (r *Response) ValidateResponseSignature(s *ServiceProviderSettings) error {
+
+	assertion, err := r.getAssertion()
+	if err != nil {
+		return err
+	}
+
+	if len(assertion.Signature.SignatureValue.Value) == 0 {
+		return errors.New("no signature")
+	}
+
+	err = VerifyResponseSignature(r.originalString, s.IDPPublicCertPath)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (r *Response) getAssertion() (Assertion, error) {
+
+	assertion := Assertion{}
+
+	if r.IsEncrypted() {
+		assertion = r.EncryptedAssertion.Assertion
+	} else {
+		assertion = r.Assertion
+	}
+
+	if len(assertion.ID) == 0 {
+		return assertion, errors.New("no Assertions")
+	}
+	return assertion, nil
 }
 
 func NewSignedResponse() *Response {
@@ -103,7 +215,7 @@ func NewSignedResponse() *Response {
 		SAMLSIG:      "http://www.w3.org/2000/09/xmldsig#",
 		ID:           util.ID(),
 		Version:      "2.0",
-		IssueInstant: time.Now().UTC().Format(time.RFC3339Nano),
+		IssueInstant: time.Now().UTC().Format(RFC3339Micro),
 		Issuer: Issuer{
 			XMLName: xml.Name{
 				Local: "saml:Issuer",
@@ -203,7 +315,7 @@ func NewSignedResponse() *Response {
 			SAML:         "urn:oasis:names:tc:SAML:2.0:assertion",
 			Version:      "2.0",
 			ID:           util.ID(),
-			IssueInstant: time.Now().UTC().Format(time.RFC3339Nano),
+			IssueInstant: time.Now().UTC().Format(RFC3339Micro),
 			Issuer: Issuer{
 				XMLName: xml.Name{
 					Local: "saml:Issuer",
@@ -232,7 +344,7 @@ func NewSignedResponse() *Response {
 							Local: "saml:SubjectConfirmationData",
 						},
 						InResponseTo: "",
-						NotOnOrAfter: time.Now().Add(time.Minute * 5).UTC().Format(time.RFC3339Nano),
+						NotOnOrAfter: time.Now().Add(time.Minute * 5).UTC().Format(RFC3339Micro),
 						Recipient:    "",
 					},
 				},
@@ -241,8 +353,8 @@ func NewSignedResponse() *Response {
 				XMLName: xml.Name{
 					Local: "saml:Conditions",
 				},
-				NotBefore:            time.Now().Add(time.Minute * -5).UTC().Format(time.RFC3339Nano),
-				NotOnOrAfter:         time.Now().Add(time.Minute * 5).UTC().Format(time.RFC3339Nano),
+				NotBefore:            time.Now().Add(time.Minute * -5).UTC().Format(RFC3339Micro),
+				NotOnOrAfter:         time.Now().Add(time.Minute * 5).UTC().Format(RFC3339Micro),
 				AudienceRestrictions: []AudienceRestriction{},
 			},
 			AttributeStatement: AttributeStatement{
@@ -350,7 +462,15 @@ func (r *Response) CompressedEncodedSignedString(privateKeyPath string) (string,
 
 // GetAttribute by Name or by FriendlyName. Return blank string if not found
 func (r *Response) GetAttribute(name string) string {
-	for _, attr := range r.Assertion.AttributeStatement.Attributes {
+	attrStatement := AttributeStatement{}
+
+	if r.IsEncrypted() {
+		attrStatement = r.EncryptedAssertion.Assertion.AttributeStatement
+	} else {
+		attrStatement = r.Assertion.AttributeStatement
+	}
+
+	for _, attr := range attrStatement.Attributes {
 		if attr.Name == name || attr.FriendlyName == name {
 			return attr.AttributeValues[0].Value
 		}

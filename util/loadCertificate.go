@@ -18,6 +18,5 @@ func LoadCertificate(certPath string) (string, error) {
 	cert = re.ReplaceAllString(cert, "")
 	cert = strings.Trim(cert, " \n")
 	cert = strings.Replace(cert, "\n", "", -1)
-
 	return cert, nil
 }

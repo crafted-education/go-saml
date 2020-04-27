@@ -24,10 +24,6 @@ import (
 	"github.com/RobotsAndPencils/go-saml/util"
 )
 
-const (
-	RFC3339Micro = "2006-01-02T15:04:05.999999Z07:00"
-)
-
 func ParseCompressedEncodedRequest(b64RequestXML string) (*AuthnRequest, error) {
 	var authnRequest AuthnRequest
 	compressedXML, err := base64.StdEncoding.DecodeString(b64RequestXML)
@@ -135,12 +131,89 @@ func NewAuthnRequest() *AuthnRequest {
 			SAML: "urn:oasis:names:tc:SAML:2.0:assertion",
 		},
 		IssueInstant: time.Now().UTC().Format(RFC3339Micro),
+		Signature: &Signature{
+			XMLName: xml.Name{
+				Local: "ds:Signature",
+			},
+			Id: "Signature1",
+			SignedInfo: SignedInfo{
+				XMLName: xml.Name{
+					Local: "ds:SignedInfo",
+				},
+				CanonicalizationMethod: CanonicalizationMethod{
+					XMLName: xml.Name{
+						Local: "ds:CanonicalizationMethod",
+					},
+					Algorithm: "http://www.w3.org/2001/10/xml-exc-c14n#",
+				},
+				SignatureMethod: SignatureMethod{
+					XMLName: xml.Name{
+						Local: "ds:SignatureMethod",
+					},
+					Algorithm: "http://www.w3.org/2001/04/xmldsig-more#rsa-sha256",
+				},
+				SamlsigReference: SamlsigReference{
+					XMLName: xml.Name{
+						Local: "ds:Reference",
+					},
+					URI: "#" + id,
+					Transforms: Transforms{
+						XMLName: xml.Name{
+							Local: "ds:Transforms",
+						},
+						Transform: []Transform{Transform{
+							XMLName: xml.Name{
+								Local: "ds:Transform",
+							},
+							Algorithm: "http://www.w3.org/2000/09/xmldsig#enveloped-signature",
+						}, Transform{
+							XMLName: xml.Name{
+								Local: "ds:Transform",
+							},
+							Algorithm: "http://www.w3.org/2001/10/xml-exc-c14n#",
+						}},
+					},
+					DigestMethod: DigestMethod{
+						XMLName: xml.Name{
+							Local: "ds:DigestMethod",
+						},
+						Algorithm: "http://www.w3.org/2001/04/xmlenc#sha256",
+					},
+					DigestValue: DigestValue{
+						XMLName: xml.Name{
+							Local: "ds:DigestValue",
+						},
+					},
+				},
+			},
+			SignatureValue: SignatureValue{
+				XMLName: xml.Name{
+					Local: "ds:SignatureValue",
+				},
+			},
+			KeyInfo: KeyInfo{
+				XMLName: xml.Name{
+					Local: "ds:KeyInfo",
+				},
+				X509Data: X509Data{
+					XMLName: xml.Name{
+						Local: "ds:X509Data",
+					},
+					X509Certificate: X509Certificate{
+						XMLName: xml.Name{
+							Local: "ds:X509Certificate",
+						},
+						Cert: "", // caller must populate cert,
+					},
+				},
+			},
+		},
 		NameIDPolicy: NameIDPolicy{
 			XMLName: xml.Name{
 				Local: "samlp:NameIDPolicy",
 			},
 			AllowCreate: true,
-			Format:      "urn:oasis:names:tc:SAML:2.0:nameid-format:transient",
+			Format:      "urn:oasis:names:tc:SAML:1.1:nameid-format:unspecified",
 		},
 		RequestedAuthnContext: RequestedAuthnContext{
 			XMLName: xml.Name{
@@ -154,78 +227,6 @@ func NewAuthnRequest() *AuthnRequest {
 				},
 				SAML:      "urn:oasis:names:tc:SAML:2.0:assertion",
 				Transport: "urn:oasis:names:tc:SAML:2.0:ac:classes:PasswordProtectedTransport",
-			},
-		},
-		Signature: &Signature{
-			XMLName: xml.Name{
-				Local: "samlsig:Signature",
-			},
-			Id: "Signature1",
-			SignedInfo: SignedInfo{
-				XMLName: xml.Name{
-					Local: "samlsig:SignedInfo",
-				},
-				CanonicalizationMethod: CanonicalizationMethod{
-					XMLName: xml.Name{
-						Local: "samlsig:CanonicalizationMethod",
-					},
-					Algorithm: "http://www.w3.org/2001/10/xml-exc-c14n#",
-				},
-				SignatureMethod: SignatureMethod{
-					XMLName: xml.Name{
-						Local: "samlsig:SignatureMethod",
-					},
-					Algorithm: "http://www.w3.org/2000/09/xmldsig#rsa-sha1",
-				},
-				SamlsigReference: SamlsigReference{
-					XMLName: xml.Name{
-						Local: "samlsig:Reference",
-					},
-					URI: "#" + id,
-					Transforms: Transforms{
-						XMLName: xml.Name{
-							Local: "samlsig:Transforms",
-						},
-						Transform: []Transform{Transform{
-							XMLName: xml.Name{
-								Local: "samlsig:Transform",
-							},
-							Algorithm: "http://www.w3.org/2000/09/xmldsig#enveloped-signature",
-						}},
-					},
-					DigestMethod: DigestMethod{
-						XMLName: xml.Name{
-							Local: "samlsig:DigestMethod",
-						},
-						Algorithm: "http://www.w3.org/2000/09/xmldsig#sha1",
-					},
-					DigestValue: DigestValue{
-						XMLName: xml.Name{
-							Local: "samlsig:DigestValue",
-						},
-					},
-				},
-			},
-			SignatureValue: SignatureValue{
-				XMLName: xml.Name{
-					Local: "samlsig:SignatureValue",
-				},
-			},
-			KeyInfo: KeyInfo{
-				XMLName: xml.Name{
-					Local: "samlsig:KeyInfo",
-				},
-				X509Data: X509Data{
-					XMLName: xml.Name{
-						Local: "samlsig:X509Data",
-					},
-					X509Certificate: X509Certificate{
-						XMLName: xml.Name{
-							Local: "samlsig:X509Certificate",
-						},
-						Cert: "", // caller must populate cert,
-					},
-				},
 			},
 		},
 	}
