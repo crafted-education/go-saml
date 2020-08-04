@@ -13,7 +13,7 @@ func (s *ServiceProviderSettings) GetEntityDescriptor() (string, error) {
 		DS:       "http://www.w3.org/2000/09/xmldsig#",
 		XMLNS:    "urn:oasis:names:tc:SAML:2.0:metadata",
 		MD:       "urn:oasis:names:tc:SAML:2.0:metadata",
-		EntityId: s.AssertionConsumerServiceURL,
+		EntityId: s.IDPSSODescriptorURL,
 
 		Extensions: Extensions{
 			XMLName: xml.Name{
