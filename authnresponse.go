@@ -470,7 +470,9 @@ func (r *Response) GetAttribute(name string) string {
 
 	for _, attr := range attrStatement.Attributes {
 		if attr.Name == name || attr.FriendlyName == name {
-			return attr.AttributeValues[0].Value
+			if len(attr.AttributeValues) > 0 {
+				return attr.AttributeValues[0].Value
+			}
 		}
 	}
 	return ""
