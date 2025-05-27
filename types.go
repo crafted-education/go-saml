@@ -8,21 +8,21 @@ const (
 
 type AuthnRequest struct {
 	XMLName                        xml.Name
-	SAMLP                          string                `xml:"xmlns:samlp,attr"`
-	SAML                           string                `xml:"xmlns:saml,attr"`
-	SAMLSIG                        string                `xml:"xmlns:ds,attr,omitempty"`
-	ID                             string                `xml:"ID,attr"`
-	Version                        string                `xml:"Version,attr"`
-	ProtocolBinding                string                `xml:"ProtocolBinding,attr"`
-	AssertionConsumerServiceURL    string                `xml:"AssertionConsumerServiceURL,attr"`
-	Destination                    string                `xml:"Destination,attr"`
-	IssueInstant                   string                `xml:"IssueInstant,attr"`
-	AssertionConsumerServiceIndex  int                   `xml:"AssertionConsumerServiceIndex,attr,omitempty"`
-	AttributeConsumingServiceIndex int                   `xml:"AttributeConsumingServiceIndex,attr"`
-	Issuer                         Issuer                `xml:"Issuer"`
-	Signature                      *Signature            `xml:"Signature,omitempty"`
-	NameIDPolicy                   NameIDPolicy          `xml:"NameIDPolicy"`
-	RequestedAuthnContext          RequestedAuthnContext `xml:"RequestedAuthnContext"`
+	SAMLP                          string                 `xml:"xmlns:samlp,attr"`
+	SAML                           string                 `xml:"xmlns:saml,attr"`
+	SAMLSIG                        string                 `xml:"xmlns:ds,attr,omitempty"`
+	ID                             string                 `xml:"ID,attr"`
+	Version                        string                 `xml:"Version,attr"`
+	ProtocolBinding                string                 `xml:"ProtocolBinding,attr"`
+	AssertionConsumerServiceURL    string                 `xml:"AssertionConsumerServiceURL,attr"`
+	Destination                    string                 `xml:"Destination,attr"`
+	IssueInstant                   string                 `xml:"IssueInstant,attr"`
+	AssertionConsumerServiceIndex  int                    `xml:"AssertionConsumerServiceIndex,attr,omitempty"`
+	AttributeConsumingServiceIndex int                    `xml:"AttributeConsumingServiceIndex,attr"`
+	Issuer                         Issuer                 `xml:"Issuer"`
+	Signature                      *Signature             `xml:"Signature,omitempty"`
+	NameIDPolicy                   NameIDPolicy           `xml:"NameIDPolicy"`
+	RequestedAuthnContext          *RequestedAuthnContext `xml:"RequestedAuthnContext,omitempty"`
 	originalString                 string
 }
 

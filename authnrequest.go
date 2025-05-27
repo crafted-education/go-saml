@@ -231,7 +231,7 @@ func NewAuthnRequest() *AuthnRequest {
 			AllowCreate: true,
 			Format:      "urn:oasis:names:tc:SAML:1.1:nameid-format:unspecified",
 		},
-		RequestedAuthnContext: RequestedAuthnContext{
+		RequestedAuthnContext: &RequestedAuthnContext{
 			XMLName: xml.Name{
 				Local: "samlp:RequestedAuthnContext",
 			},
