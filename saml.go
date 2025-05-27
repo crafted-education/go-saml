@@ -1,7 +1,7 @@
 package saml
 
 import (
-	"github.com/RobotsAndPencils/go-saml/util"
+	"github.com/crafted-education/go-saml/util"
 )
 
 // ServiceProviderSettings provides settings to configure server acting as a SAML Service Provider.
