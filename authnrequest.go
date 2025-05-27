@@ -96,6 +96,22 @@ func (s *ServiceProviderSettings) GetAuthnRequest() *AuthnRequest {
 	return r
 }
 
+// GetSignedAuthnRequest returns a singed XML document that represents a AuthnRequest SAML document
+func (s *ServiceProviderSettings) GetAuthnRequest_NoAuthnRequestedContext() *AuthnRequest {
+	r := NewAuthnRequest_NoRequestedAuthnContext()
+	r.AssertionConsumerServiceURL = s.AssertionConsumerServiceURL
+	r.Destination = s.IDPSSOURL
+	r.Issuer.Url = s.IDPSSODescriptorURL
+	r.Signature.KeyInfo.X509Data.X509Certificate.Cert = s.PublicCert()
+
+	if !s.SPSignRequest {
+		r.SAMLSIG = ""
+		r.Signature = nil
+	}
+
+	return r
+}
+
 // GetAuthnRequestURL generate a URL for the AuthnRequest to the IdP with the SAMLRequst parameter encoded
 func GetAuthnRequestURL(baseURL string, b64XML string, state string) (string, error) {
 	u, err := url.Parse(baseURL)
@@ -228,6 +244,114 @@ func NewAuthnRequest() *AuthnRequest {
 				SAML:      "urn:oasis:names:tc:SAML:2.0:assertion",
 				Transport: "urn:oasis:names:tc:SAML:2.0:ac:classes:PasswordProtectedTransport",
 			},
+		},
+	}
+}
+
+func NewAuthnRequest_NoRequestedAuthnContext() *AuthnRequest {
+	id := util.ID()
+	return &AuthnRequest{
+		XMLName: xml.Name{
+			Local: "samlp:AuthnRequest",
+		},
+		SAMLP:                       "urn:oasis:names:tc:SAML:2.0:protocol",
+		SAML:                        "urn:oasis:names:tc:SAML:2.0:assertion",
+		SAMLSIG:                     "http://www.w3.org/2000/09/xmldsig#",
+		ID:                          id,
+		ProtocolBinding:             "urn:oasis:names:tc:SAML:2.0:bindings:HTTP-POST",
+		Version:                     "2.0",
+		AssertionConsumerServiceURL: "", // caller must populate ar.AppSettings.AssertionConsumerServiceURL,
+		Issuer: Issuer{
+			XMLName: xml.Name{
+				Local: "saml:Issuer",
+			},
+			Url:  "", // caller must populate ar.AppSettings.Issuer
+			SAML: "urn:oasis:names:tc:SAML:2.0:assertion",
+		},
+		IssueInstant: time.Now().UTC().Format(RFC3339Micro),
+		Signature: &Signature{
+			XMLName: xml.Name{
+				Local: "ds:Signature",
+			},
+			Id: "Signature1",
+			SignedInfo: SignedInfo{
+				XMLName: xml.Name{
+					Local: "ds:SignedInfo",
+				},
+				CanonicalizationMethod: CanonicalizationMethod{
+					XMLName: xml.Name{
+						Local: "ds:CanonicalizationMethod",
+					},
+					Algorithm: "http://www.w3.org/2001/10/xml-exc-c14n#",
+				},
+				SignatureMethod: SignatureMethod{
+					XMLName: xml.Name{
+						Local: "ds:SignatureMethod",
+					},
+					Algorithm: "http://www.w3.org/2001/04/xmldsig-more#rsa-sha256",
+				},
+				SamlsigReference: SamlsigReference{
+					XMLName: xml.Name{
+						Local: "ds:Reference",
+					},
+					URI: "#" + id,
+					Transforms: Transforms{
+						XMLName: xml.Name{
+							Local: "ds:Transforms",
+						},
+						Transform: []Transform{Transform{
+							XMLName: xml.Name{
+								Local: "ds:Transform",
+							},
+							Algorithm: "http://www.w3.org/2000/09/xmldsig#enveloped-signature",
+						}, Transform{
+							XMLName: xml.Name{
+								Local: "ds:Transform",
+							},
+							Algorithm: "http://www.w3.org/2001/10/xml-exc-c14n#",
+						}},
+					},
+					DigestMethod: DigestMethod{
+						XMLName: xml.Name{
+							Local: "ds:DigestMethod",
+						},
+						Algorithm: "http://www.w3.org/2001/04/xmlenc#sha256",
+					},
+					DigestValue: DigestValue{
+						XMLName: xml.Name{
+							Local: "ds:DigestValue",
+						},
+					},
+				},
+			},
+			SignatureValue: SignatureValue{
+				XMLName: xml.Name{
+					Local: "ds:SignatureValue",
+				},
+			},
+			KeyInfo: KeyInfo{
+				XMLName: xml.Name{
+					Local: "ds:KeyInfo",
+				},
+				X509Data: X509Data{
+					XMLName: xml.Name{
+						Local: "ds:X509Data",
+					},
+					X509Certificate: X509Certificate{
+						XMLName: xml.Name{
+							Local: "ds:X509Certificate",
+						},
+						Cert: "", // caller must populate cert,
+					},
+				},
+			},
+		},
+		NameIDPolicy: NameIDPolicy{
+			XMLName: xml.Name{
+				Local: "samlp:NameIDPolicy",
+			},
+			AllowCreate: true,
+			Format:      "urn:oasis:names:tc:SAML:1.1:nameid-format:unspecified",
 		},
 	}
 }
